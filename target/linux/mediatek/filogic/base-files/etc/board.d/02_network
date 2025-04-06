@@ -10,11 +10,8 @@ mediatek_setup_interfaces()
 	case $board in
 	abt,asr3000|\
 	cmcc,rax3000m|\
-	cmcc,xr30-nand-ubootmod|\
+	cmcc,xr30|\
 	h3c,magic-nx30-pro|\
-	h3c,magic-nx30-pro-nmbm|\
-	imou,lc-hx3001|\
-	konka,komi-a31|\
 	nokia,ea0326gmp|\
 	zbtlink,zbt-z8103ax)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" eth1
@@ -34,13 +31,12 @@ mediatek_setup_interfaces()
 		;;
 	asus,rt-ax59u|\
 	cetron,ct3003|\
-	cetron,ct3003-ubootmod|\
-	cmcc,a10|\
+	cmcc,a10-stock|\
+	cmcc,a10-ubootmod|\
 	confiabits,mt7981|\
 	cudy,wr3000-v1|\
 	jcg,q30-pro|\
-	livinet,zr-3020|\
-	livinet,zr-3020-ubootmod|\
+	keenetic,kn-3811|\
 	qihoo,360t7|\
 	routerich,ax3000|\
 	routerich,ax3000-ubootmod)
@@ -79,6 +75,7 @@ mediatek_setup_interfaces()
 		ucidef_set_interfaces_lan_wan "lan1" eth1
 		;;
 	cudy,ap3000outdoor-v1|\
+	cudy,ap3000-v1|\
 	cudy,re3000-v1|\
 	netgear,wax220|\
 	ubnt,unifi-6-plus|\
@@ -95,7 +92,8 @@ mediatek_setup_interfaces()
 	openwrt,one)
 		ucidef_set_interfaces_lan_wan eth1 eth0
 		;;
-	dlink,aquila-pro-ai-m30-a1)
+	dlink,aquila-pro-ai-m30-a1|\
+	dlink,aquila-pro-ai-m60-a1)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" internet
 		;;
 	keenetic,kn-3911|\
@@ -114,7 +112,8 @@ mediatek_setup_interfaces()
 	mediatek,mt7988a-rfb)
 		ucidef_set_interfaces_lan_wan "lan0 lan1 lan2 lan3 eth2" eth1
 		;;
-	mercusys,mr90x-v1)
+	mercusys,mr90x-v1|\
+	mercusys,mr90x-v1-ubi)
 		ucidef_set_interfaces_lan_wan "lan0 lan1 lan2" eth1
 		;;
 	tplink,tl-xdr6086|\
@@ -157,8 +156,7 @@ mediatek_setup_macs()
 	bananapi,bpi-r4)
 		wan_mac=$(macaddr_add $(cat /sys/class/net/eth0/address) 1)
 		;;
-	h3c,magic-nx30-pro|\
-	h3c,magic-nx30-pro-nmbm)
+	h3c,magic-nx30-pro)
 		wan_mac=$(mtd_get_mac_ascii pdt_data_1 ethaddr)
 		lan_mac=$(macaddr_add "$wan_mac" 1)
 		label_mac=$wan_mac
