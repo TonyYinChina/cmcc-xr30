@@ -156,7 +156,8 @@ define Device/acer_predator-w6
   DEVICE_DTS := mt7986a-acer-predator-w6
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS_LOADADDR := 0x47000000
-  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7916-firmware kmod-mt7986-firmware mt7986-wo-firmware e2fsprogs f2fsck mkf2fs
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware kmod-mt7916-firmware \
+	mt7986-wo-firmware f2fsck mkf2fs automount
   IMAGES := sysupgrade.bin
   KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   KERNEL_INITRAMFS := kernel-bin | lzma | \
@@ -263,7 +264,7 @@ define Device/asus_rt-ax59u
   DEVICE_MODEL := RT-AX59U
   DEVICE_DTS := mt7986a-asus-rt-ax59u
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware automount
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
 TARGET_DEVICES += asus_rt-ax59u
@@ -274,7 +275,7 @@ define Device/asus_tuf-ax4200
   DEVICE_DTS := mt7986a-asus-tuf-ax4200
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS_LOADADDR := 0x47000000
-  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware automount
   IMAGES := sysupgrade.bin
   KERNEL := kernel-bin | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
@@ -314,7 +315,7 @@ define Device/asus_tuf-ax6000
   DEVICE_DTS := mt7986a-asus-tuf-ax6000
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS_LOADADDR := 0x47000000
-  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware automount
   IMAGES := sysupgrade.bin
   KERNEL := kernel-bin | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
@@ -334,8 +335,8 @@ define Device/bananapi_bpi-r3
 		       mt7986a-bananapi-bpi-r3-respeaker-2mics
   DEVICE_DTS_DIR := $(DTS_DIR)/
   DEVICE_DTS_LOADADDR := 0x43f00000
-  DEVICE_PACKAGES := kmod-hwmon-pwmfan kmod-i2c-gpio kmod-mt7915e kmod-mt7986-firmware kmod-sfp kmod-usb3 \
-		     e2fsprogs f2fsck mkf2fs mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-hwmon-pwmfan kmod-i2c-gpio kmod-mt7915e kmod-mt7986-firmware kmod-sfp \
+		     kmod-usb3 f2fsck mkf2fs mt7986-wo-firmware automount
   IMAGES := sysupgrade.itb
   KERNEL_LOADADDR := 0x44000000
   KERNEL_INITRAMFS_SUFFIX := -recovery.itb
@@ -388,7 +389,7 @@ define Device/bananapi_bpi-r3-mini
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS_LOADADDR := 0x43f00000
   DEVICE_PACKAGES := kmod-hwmon-pwmfan kmod-mt7915e kmod-mt7986-firmware kmod-phy-airoha-en8811h \
-		     kmod-usb3 e2fsprogs f2fsck mkf2fs mt7986-wo-firmware
+		     kmod-usb3 f2fsck mkf2fs mt7986-wo-firmware automount
   KERNEL_LOADADDR := 0x44000000
   KERNEL := kernel-bin | gzip
   KERNEL_INITRAMFS := kernel-bin | lzma | \
@@ -422,6 +423,8 @@ endif
 ifneq ($(CONFIG_PACKAGE_airoha-en8811h-firmware),)
   UBINIZE_PARTS += en8811h-fw=:$(STAGING_DIR_IMAGE)/EthMD32.bin
 endif
+  DEVICE_COMPAT_VERSION := 1.2
+  DEVICE_COMPAT_MESSAGE := Flash layout changes require bootloader update
 endef
 TARGET_DEVICES += bananapi_bpi-r3-mini
 
@@ -486,13 +489,15 @@ TARGET_DEVICES += bananapi_bpi-r4-poe
 define Device/cetron_ct3003
   DEVICE_VENDOR := Cetron
   DEVICE_MODEL := CT3003
+  DEVICE_VARIANT := (stock layout)
   DEVICE_DTS := mt7981b-cetron-ct3003
   DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += mediatek,mt7981-spim-snand-rfb
+  SUPPORTED_DEVICES += cetron,ct3003-stock mediatek,mt7981-spim-snand-rfb
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
+  IMAGE_SIZE := 32768k
   KERNEL_IN_UBI := 1
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   IMAGES += factory.bin
@@ -500,42 +505,38 @@ define Device/cetron_ct3003
 endef
 TARGET_DEVICES += cetron_ct3003
 
-define Device/cmcc_a10-stock
-  DEVICE_VENDOR := CMCC
-  DEVICE_MODEL := A10 (stock layout)
-  DEVICE_ALT0_VENDOR := SuperElectron
-  DEVICE_ALT0_MODEL := ZN-M5 (stock layout)
-  DEVICE_ALT1_VENDOR := SuperElectron
-  DEVICE_ALT1_MODEL := ZN-M8 (stock layout)
-  DEVICE_DTS := mt7981b-cmcc-a10-stock
+define Device/cetron_ct3003-ubootmod
+  DEVICE_VENDOR := Cetron
+  DEVICE_MODEL := CT3003
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
+  DEVICE_DTS := mt7981b-cetron-ct3003-ubootmod
   DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += mediatek,mt7981-spim-snand-rfb
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
-  IMAGE_SIZE := 65536k
   KERNEL_IN_UBI := 1
-  IMAGES += factory.bin
-  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  KERNEL = kernel-bin | lzma | \
-	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
-  KERNEL_INITRAMFS = kernel-bin | lzma | \
-	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd
+  UBOOTENV_IN_UBI := 1
+  IMAGES := sysupgrade.itb
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
+  IMAGE/sysupgrade.itb := append-kernel | \
+        fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := mt7981-bl2 spim-nand-ddr3
+  ARTIFACT/bl31-uboot.fip := mt7981-bl31-uboot cetron_ct3003
+  DEVICE_COMPAT_VERSION := 1.2
+  DEVICE_COMPAT_MESSAGE := Flash layout changes require bootloader update
 endef
-TARGET_DEVICES += cmcc_a10-stock
+TARGET_DEVICES += cetron_ct3003-ubootmod
 
-define Device/cmcc_a10-ubootmod
+define Device/cmcc_a10
   DEVICE_VENDOR := CMCC
-  DEVICE_MODEL := A10 (OpenWrt U-Boot layout)
-  DEVICE_ALT0_VENDOR := SuperElectron
-  DEVICE_ALT0_MODEL := ZN-M5 (OpenWrt U-Boot layout)
-  DEVICE_ALT1_VENDOR := SuperElectron
-  DEVICE_ALT1_MODEL := ZN-M8 (OpenWrt U-Boot layout)
-  DEVICE_DTS := mt7981b-cmcc-a10-ubootmod
+  DEVICE_MODEL := A10
+  DEVICE_DTS := mt7981b-cmcc-a10
   DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += cmcc,a10
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
@@ -553,7 +554,7 @@ define Device/cmcc_a10-ubootmod
   ARTIFACT/preloader.bin := mt7981-bl2 spim-nand-ddr3
   ARTIFACT/bl31-uboot.fip := mt7981-bl31-uboot cmcc_a10
 endef
-TARGET_DEVICES += cmcc_a10-ubootmod
+TARGET_DEVICES += cmcc_a10
 
 define Device/cmcc_rax3000m
   DEVICE_VENDOR := CMCC
@@ -564,7 +565,7 @@ define Device/cmcc_rax3000m
   DEVICE_DTC_FLAGS := --pad 4096
   DEVICE_DTS_LOADADDR := 0x43f00000
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
-	e2fsprogs f2fsck mkf2fs
+	automount f2fsck mkf2fs
   KERNEL_LOADADDR := 0x44000000
   KERNEL := kernel-bin | gzip
   KERNEL_INITRAMFS := kernel-bin | lzma | \
@@ -575,8 +576,8 @@ define Device/cmcc_rax3000m
   IMAGES := sysupgrade.itb
   IMAGE_SIZE := $$(shell expr 64 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
   IMAGE/sysupgrade.itb := append-kernel | \
-	 fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | \
-	 pad-rootfs | append-metadata
+	fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | \
+	pad-rootfs | append-metadata
   ARTIFACTS := \
 	emmc-gpt.bin emmc-preloader.bin emmc-bl31-uboot.fip \
 	nand-preloader.bin nand-bl31-uboot.fip
@@ -588,28 +589,29 @@ define Device/cmcc_rax3000m
 endef
 TARGET_DEVICES += cmcc_rax3000m
 
-define Device/cmcc_xr30
+define Device/cmcc_xr30-nand-ubootmod
   DEVICE_VENDOR := CMCC
-  DEVICE_MODEL := XR30
-  DEVICE_DTS := mt7981b-cmcc-xr30
+  DEVICE_MODEL := XR30 NAND version
+  DEVICE_VARIANT := (custom U-Boot layout)
+  DEVICE_DTS := mt7981b-cmcc-xr30-nand-ubootmod
   DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
+	automount f2fsck mkf2fs
   SUPPORTED_DEVICES := cmcc,xr30
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
+  IMAGE_SIZE := 116736k
   KERNEL_IN_UBI := 1
-  IMAGE_SIZE := $$(shell expr 64 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
-	e2fsprogs f2fsck mkf2fs
 endef
-TARGET_DEVICES += cmcc_xr30
+TARGET_DEVICES += cmcc_xr30-nand-ubootmod
 
 define Device/comfast_cf-e393ax
   DEVICE_VENDOR := COMFAST
   DEVICE_MODEL := CF-E393AX
-  DEVICE_ALT0_VENDOR := COMFAST
-  DEVICE_ALT0_MODEL := CF-E395AX
   DEVICE_DTS := mt7981a-comfast-cf-e393ax
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTC_FLAGS := --pad 4096
@@ -643,7 +645,8 @@ define Device/confiabits_mt7981
   IMAGE_SIZE := 65536k
   KERNEL_IN_UBI := 1
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware \
+	kmod-usb3 automount
 endef
 TARGET_DEVICES += confiabits_mt7981
 
@@ -663,23 +666,6 @@ define Device/cudy_ap3000outdoor-v1
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
 endef
 TARGET_DEVICES += cudy_ap3000outdoor-v1
-
-define Device/cudy_ap3000-v1
-  DEVICE_VENDOR := Cudy
-  DEVICE_MODEL := AP3000
-  DEVICE_VARIANT := v1
-  DEVICE_DTS := mt7981b-cudy-ap3000-v1
-  DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += R49
-  UBINIZE_OPTS := -E 5
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  IMAGE_SIZE := 65536k
-  KERNEL_IN_UBI := 1
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
-endef
-TARGET_DEVICES += cudy_ap3000-v1
 
 define Device/cudy_m3000-v1
   DEVICE_VENDOR := Cudy
@@ -790,20 +776,6 @@ define Device/dlink_aquila-pro-ai-m30-a1
 endef
 TARGET_DEVICES += dlink_aquila-pro-ai-m30-a1
 
-define Device/dlink_aquila-pro-ai-m60-a1
-  DEVICE_VENDOR := D-Link
-  DEVICE_MODEL := AQUILA PRO AI M60
-  DEVICE_VARIANT := A1
-  DEVICE_DTS := mt7986a-dlink-aquila-pro-ai-m60-a1
-  DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-leds-gca230718 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
-  IMAGES += recovery.bin
-  IMAGE_SIZE := 51200k
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  IMAGE/recovery.bin := sysupgrade-tar | pad-to $$(IMAGE_SIZE) | dlink-ai-recovery-header DLK6E8202001 \x30\x6C\x19\x0C \x00\x00\x2C\x00 \x00\x00\x20\x03 \x82\x6E
-endef
-TARGET_DEVICES += dlink_aquila-pro-ai-m60-a1
-
 define Device/edgecore_eap111
   DEVICE_VENDOR := Edgecore
   DEVICE_MODEL := EAP111
@@ -848,7 +820,7 @@ define Device/glinet_gl-mt2500
   DEVICE_DTS := mt7981b-glinet-gl-mt2500
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS_LOADADDR := 0x47000000
-  DEVICE_PACKAGES := -wpad-basic-mbedtls e2fsprogs f2fsck mkf2fs kmod-usb3
+  DEVICE_PACKAGES :=-wpad-openssl f2fsck mkf2fs kmod-usb3 automount
   SUPPORTED_DEVICES += glinet,mt2500-emmc
   IMAGES := sysupgrade.bin
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
@@ -861,7 +833,8 @@ define Device/glinet_gl-mt3000
   DEVICE_DTS := mt7981b-glinet-gl-mt3000
   DEVICE_DTS_DIR := ../dts
   SUPPORTED_DEVICES += glinet,mt3000-snand
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-hwmon-pwmfan kmod-usb3
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware \
+	kmod-hwmon-pwmfan kmod-usb3 automount
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
@@ -876,7 +849,8 @@ define Device/glinet_gl-mt6000
   DEVICE_MODEL := GL-MT6000
   DEVICE_DTS := mt7986a-glinet-gl-mt6000
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := e2fsprogs f2fsck mkf2fs kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware \
+	automount f2fsck mkf2fs
   IMAGES += factory.bin
   IMAGE/factory.bin := append-kernel | pad-to 32M | append-rootfs
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
@@ -891,7 +865,7 @@ define Device/glinet_gl-x3000-xe3000-common
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware mkf2fs \
     kmod-fs-f2fs kmod-hwmon-pwmfan kmod-usb3 kmod-usb-serial-option \
-    kmod-usb-storage kmod-usb-net-qmi-wwan uqmi
+    kmod-usb-storage kmod-usb-net-qmi-wwan uqmi automount
   IMAGES += factory.bin
   IMAGE/factory.bin := append-kernel | pad-to 32M | append-rootfs
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
@@ -920,6 +894,7 @@ TARGET_DEVICES += glinet_gl-xe3000
 define Device/h3c_magic-nx30-pro
   DEVICE_VENDOR := H3C
   DEVICE_MODEL := Magic NX30 Pro
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7981b-h3c-magic-nx30-pro
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -942,9 +917,60 @@ define Device/h3c_magic-nx30-pro
 endef
 TARGET_DEVICES += h3c_magic-nx30-pro
 
+define Device/h3c_magic-nx30-pro-nmbm
+  DEVICE_VENDOR := H3C
+  DEVICE_MODEL := Magic NX30 Pro
+  DEVICE_VARIANT := (NMBM layout)
+  DEVICE_DTS := mt7981b-h3c-magic-nx30-pro-nmbm
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  IMAGE_SIZE := 65536k
+  KERNEL_IN_UBI := 1
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  KERNEL = kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  KERNEL_INITRAMFS = kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd
+endef
+TARGET_DEVICES += h3c_magic-nx30-pro-nmbm
+
+define Device/imou_lc-hx3001
+  DEVICE_VENDOR := Imou
+  DEVICE_MODEL := LC-HX3001
+  DEVICE_DTS := mt7981b-imou-lc-hx3001
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  KERNEL_IN_UBI := 1
+  UBOOTENV_IN_UBI := 1
+  IMAGES := sysupgrade.itb
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
+  IMAGE/sysupgrade.itb := append-kernel | \
+        fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := mt7981-bl2 spim-nand-ddr3
+  ARTIFACT/bl31-uboot.fip := mt7981-bl31-uboot imou_lc-hx3001
+endef
+TARGET_DEVICES += imou_lc-hx3001
+
 define Device/jcg_q30-pro
   DEVICE_VENDOR := JCG
   DEVICE_MODEL := Q30 PRO
+  DEVICE_ALT0_VENDOR := JCG
+  DEVICE_ALT0_MODEL := Q30
+  DEVICE_ALT1_VENDOR := CMCC
+  DEVICE_ALT1_MODEL := MR3000D-CIq
+  SUPPORTED_DEVICES += jcg,q30
   DEVICE_DTS := mt7981b-jcg-q30-pro
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -992,26 +1018,6 @@ define Device/jdcloud_re-cp-03
 endef
 TARGET_DEVICES += jdcloud_re-cp-03
 
-define Device/keenetic_kn-3811
-  DEVICE_VENDOR := Keenetic
-  DEVICE_MODEL := KN-3811
-  DEVICE_DTS := mt7981b-keenetic-kn-3811
-  DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3
-  UBINIZE_OPTS := -E 5
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  KERNEL_SIZE := 6144k
-  IMAGE_SIZE := 233984k
-  KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | \
-	append-squashfs4-fakeroot
-  IMAGES += factory.bin
-  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | \
-	append-ubi | check-size | zyimage -d 0x803811 -v "KN-3811"
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-endef
-TARGET_DEVICES += keenetic_kn-3811
-
 define Device/keenetic_kn-3911
   DEVICE_VENDOR := Keenetic
   DEVICE_MODEL := KN-3911
@@ -1031,6 +1037,92 @@ define Device/keenetic_kn-3911
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
 TARGET_DEVICES += keenetic_kn-3911
+
+define Device/konka_komi-a31
+  DEVICE_VENDOR := Konka
+  DEVICE_MODEL := KOMI A31
+  DEVICE_ALT0_VENDOR := E-Life
+  DEVICE_ALT0_MODEL := ETR631-T
+  DEVICE_ALT1_VENDOR := E-Life
+  DEVICE_ALT1_MODEL := ETR635-U
+  DEVICE_DTS := mt7981b-konka-komi-a31
+  DEVICE_DTS_OVERLAY := mt7981b-konka-komi-a31-emmc mt7981b-konka-komi-a31-nor
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_DTC_FLAGS := --pad 4096
+  DEVICE_DTS_LOADADDR := 0x43f00000
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  KERNEL_LOADADDR := 0x44000000
+  KERNEL_IN_UBI := 1
+  UBOOTENV_IN_UBI := 1
+  IMAGES := sysupgrade.itb
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
+  IMAGE/sysupgrade.itb := append-kernel | \
+        fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip \
+	emmc-gpt.bin emmc-preloader.bin emmc-bl31-uboot.fip \
+	nor-preloader.bin nor-bl31-uboot.fip
+  ARTIFACT/preloader.bin := mt7981-bl2 spim-nand-ddr3
+  ARTIFACT/bl31-uboot.fip := mt7981-bl31-uboot konka_komi-a31
+  ARTIFACT/emmc-gpt.bin := mt798x-gpt emmc
+  ARTIFACT/emmc-preloader.bin := mt7981-bl2 emmc-ddr3
+  ARTIFACT/emmc-bl31-uboot.fip := mt7981-bl31-uboot konka_komi-a31-emmc
+  ARTIFACT/nor-preloader.bin := mt7981-bl2 nor-ddr3
+  ARTIFACT/nor-bl31-uboot.fip := mt7981-bl31-uboot konka_komi-a31-nor
+endef
+TARGET_DEVICES += konka_komi-a31
+
+define Device/livinet_zr-3020
+  DEVICE_VENDOR := Livinet
+  DEVICE_MODEL := ZR-3020
+  DEVICE_VARIANT := (stock layout)
+  DEVICE_DTS := mt7981b-livinet-zr-3020
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  SUPPORTED_DEVICES += mediatek,mt7981-spim-snand-gsw-rfb
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  IMAGE_SIZE := 65536k
+  KERNEL_IN_UBI := 1
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  KERNEL = kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  KERNEL_INITRAMFS = kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd
+endef
+TARGET_DEVICES += livinet_zr-3020
+
+define Device/livinet_zr-3020-ubootmod
+  DEVICE_VENDOR := Livinet
+  DEVICE_MODEL := ZR-3020
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
+  DEVICE_DTS := mt7981b-livinet-zr-3020-ubootmod
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  KERNEL_IN_UBI := 1
+  UBOOTENV_IN_UBI := 1
+  IMAGES := sysupgrade.itb
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+        fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
+  IMAGE/sysupgrade.itb := append-kernel | \
+        fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := mt7981-bl2 spim-nand-ddr3
+  ARTIFACT/bl31-uboot.fip := mt7981-bl31-uboot livinet_zr-3020
+  DEVICE_COMPAT_VERSION := 1.2
+  DEVICE_COMPAT_MESSAGE := Flash layout changes require bootloader update
+endef
+TARGET_DEVICES += livinet_zr-3020-ubootmod
 
 define Device/mediatek_mt7981-rfb
   DEVICE_VENDOR := MediaTek
@@ -1204,34 +1296,6 @@ define Device/mercusys_mr90x-v1
 endef
 TARGET_DEVICES += mercusys_mr90x-v1
 
-define Device/mercusys_mr90x-v1-ubi
-  DEVICE_VENDOR := MERCUSYS
-  DEVICE_MODEL := MR90X v1 (UBI)
-  DEVICE_DTS := mt7986b-mercusys-mr90x-v1-ubi
-  DEVICE_DTS_DIR := ../dts
-  DEVICE_DTC_FLAGS := --pad 4096
-  DEVICE_DTS_LOADADDR := 0x43f00000
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
-  UBINIZE_OPTS := -E 5
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  KERNEL_IN_UBI := 1
-  UBOOTENV_IN_UBI := 1
-  IMAGES := sysupgrade.itb
-  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
-  KERNEL := kernel-bin | gzip
-  KERNEL_INITRAMFS := kernel-bin | lzma | \
-	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | \
-	pad-to 64k
-  IMAGE/sysupgrade.itb := append-kernel | \
-	fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-with-rootfs | \
-	append-metadata
-  ARTIFACTS := bl31-uboot.fip preloader.bin
-  ARTIFACT/bl31-uboot.fip := mt7986-bl31-uboot mercusys_mr90x-v1
-  ARTIFACT/preloader.bin := mt7986-bl2 spim-nand-ubi-ddr3
-endef
-TARGET_DEVICES += mercusys_mr90x-v1-ubi
-
 define Device/netcore_n60
   DEVICE_VENDOR := Netcore
   DEVICE_MODEL := N60
@@ -1306,7 +1370,7 @@ define Device/openembed_som7981
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware \
 	kmod-crypto-hw-atmel kmod-eeprom-at24 kmod-gpio-beeper kmod-rtc-pcf8563 \
 	kmod-usb-net-cdc-mbim kmod-usb-net-qmi-wwan kmod-usb-serial-option \
-	kmod-usb3 uqmi
+	kmod-usb3 automount uqmi
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
@@ -1393,7 +1457,7 @@ define Device/routerich_ax3000
   DEVICE_MODEL := AX3000
   DEVICE_DTS := mt7981b-routerich-ax3000
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 automount
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   SUPPORTED_DEVICES += mediatek,mt7981-spim-snand-rfb
   DEVICE_COMPAT_VERSION := 1.1
@@ -1468,7 +1532,7 @@ define Device/tplink_tl-xdr-common
         fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
   IMAGE/sysupgrade.itb := append-kernel | \
         fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-with-rootfs | append-metadata
-  DEVICE_PACKAGES := fitblk kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-usb3 kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware automount
   ARTIFACTS := preloader.bin bl31-uboot.fip
   ARTIFACT/preloader.bin := mt7986-bl2 spim-nand-ddr3
 endef
@@ -1521,7 +1585,7 @@ define Device/unielec_u7981-01
   DEVICE_VENDOR := Unielec
   DEVICE_MODEL := U7981-01
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 e2fsprogs f2fsck mkf2fs fdisk partx-utils
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 f2fsck mkf2fs fdisk partx-utils automount
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
 
@@ -1553,6 +1617,7 @@ TARGET_DEVICES += wavlink_wl-wn586x3
 define Device/xiaomi_mi-router-ax3000t
   DEVICE_VENDOR := Xiaomi
   DEVICE_MODEL := Mi Router AX3000T
+  DEVICE_VARIANT := (stock layout)
   DEVICE_DTS := mt7981b-xiaomi-mi-router-ax3000t
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -1569,7 +1634,8 @@ TARGET_DEVICES += xiaomi_mi-router-ax3000t
 
 define Device/xiaomi_mi-router-ax3000t-ubootmod
   DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := Mi Router AX3000T (OpenWrt U-Boot layout)
+  DEVICE_MODEL := Mi Router AX3000T
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7981b-xiaomi-mi-router-ax3000t-ubootmod
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -1597,7 +1663,8 @@ TARGET_DEVICES += xiaomi_mi-router-ax3000t-ubootmod
 
 define Device/xiaomi_mi-router-wr30u-stock
   DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := Mi Router WR30U (stock layout)
+  DEVICE_MODEL := Mi Router WR30U
+  DEVICE_VARIANT := (stock layout)
   DEVICE_DTS := mt7981b-xiaomi-mi-router-wr30u-stock
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -1614,7 +1681,8 @@ TARGET_DEVICES += xiaomi_mi-router-wr30u-stock
 
 define Device/xiaomi_mi-router-wr30u-ubootmod
   DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := Mi Router WR30U (OpenWrt U-Boot layout)
+  DEVICE_MODEL := Mi Router WR30U
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7981b-xiaomi-mi-router-wr30u-ubootmod
   DEVICE_DTS_DIR := ../dts
   UBINIZE_OPTS := -E 5
@@ -1642,7 +1710,8 @@ TARGET_DEVICES += xiaomi_mi-router-wr30u-ubootmod
 
 define Device/xiaomi_redmi-router-ax6000-stock
   DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := Redmi Router AX6000 (stock layout)
+  DEVICE_MODEL := Redmi Router AX6000
+  DEVICE_VARIANT := (stock layout)
   DEVICE_DTS := mt7986a-xiaomi-redmi-router-ax6000-stock
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-leds-ws2812b kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
@@ -1659,7 +1728,8 @@ TARGET_DEVICES += xiaomi_redmi-router-ax6000-stock
 
 define Device/xiaomi_redmi-router-ax6000-ubootmod
   DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := Redmi Router AX6000 (OpenWrt U-Boot layout)
+  DEVICE_MODEL := Redmi Router AX6000
+  DEVICE_VARIANT := (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7986a-xiaomi-redmi-router-ax6000-ubootmod
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-leds-ws2812b kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware
@@ -1708,7 +1778,8 @@ define Device/zbtlink_zbt-z8102ax
   DEVICE_MODEL := ZBT-Z8102AX
   DEVICE_DTS := mt7981b-zbtlink-zbt-z8102ax
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 kmod-usb-net-qmi-wwan kmod-usb-serial-option
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
+	kmod-usb-net-qmi-wwan kmod-usb-serial-option automount
   KERNEL_IN_UBI := 1
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
@@ -1740,14 +1811,10 @@ TARGET_DEVICES += zbtlink_zbt-z8103ax
 define Device/zyxel_ex5601-t0-stock
   DEVICE_VENDOR := Zyxel
   DEVICE_MODEL := EX5601-T0
-  DEVICE_ALT0_VENDOR := Zyxel
-  DEVICE_ALT0_MODEL := EX5601-T1
-  DEVICE_ALT1_VENDOR := Zyxel
-  DEVICE_ALT1_MODEL := T-56
   DEVICE_VARIANT := (stock layout)
   DEVICE_DTS := mt7986a-zyxel-ex5601-t0-stock
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware kmod-usb3
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware kmod-usb3 automount
   SUPPORTED_DEVICES := mediatek,mt7986a-rfb-snand
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 256k
@@ -1767,14 +1834,10 @@ TARGET_DEVICES += zyxel_ex5601-t0-stock
 define Device/zyxel_ex5601-t0-ubootmod
   DEVICE_VENDOR := Zyxel
   DEVICE_MODEL := EX5601-T0
-  DEVICE_ALT0_VENDOR := Zyxel
-  DEVICE_ALT0_MODEL := EX5601-T1
-  DEVICE_ALT1_VENDOR := Zyxel
-  DEVICE_ALT1_MODEL := T-56
   DEVICE_VARIANT := (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7986a-zyxel-ex5601-t0-ubootmod
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware kmod-usb3
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7986-firmware mt7986-wo-firmware kmod-usb3 automount
   KERNEL_INITRAMFS_SUFFIX := -recovery.itb
   IMAGES := sysupgrade.itb
   UBINIZE_OPTS := -E 5
@@ -1802,7 +1865,8 @@ define Device/zyxel_ex5700-telenor
   DEVICE_MODEL := EX5700 (Telenor)
   DEVICE_DTS := mt7986a-zyxel-ex5700-telenor
   DEVICE_DTS_DIR := ../dts
-  DEVICE_PACKAGES := kmod-ubootenv-nvram kmod-usb3 kmod-mt7915e kmod-mt7916-firmware kmod-mt7986-firmware mt7986-wo-firmware
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7916-firmware kmod-ubootenv-nvram \
+	kmod-usb3 kmod-mt7986-firmware mt7986-wo-firmware automount
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
